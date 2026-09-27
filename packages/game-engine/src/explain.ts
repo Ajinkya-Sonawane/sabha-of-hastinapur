@@ -23,7 +23,7 @@ export function explainGame(state: InternalGameState, results: PlayerResult[]): 
   for (const event of state.events.filter((e) => e.round === state.round)) {
     const p = event.payload;
     const actor = name(event.actorPlayerId);
-    const actorRole = p.role ? role(p.role) : "";
+    const actorRole = p.actorRole ? role(p.actorRole) : "";
     switch (event.type) {
       case "PROTECT":
         night(`${actorRole} (${actor}) protected ${name(p.target)}.`);

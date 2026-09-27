@@ -87,6 +87,8 @@ describe("ten-player game, end to end", () => {
     const text = results.explanation.map((e) => e.text).join("\n");
     expect(text).toContain("Karna ↔ Sahadeva");
     expect(text).toContain("Dharma Vote");
+    expect(text).toContain("Sahadeva (Player F) inspected Player A: Duryodhana.");
+    expect(text).toContain("Vidura (Player H) inspected Player C: Kaurava.");
 
     // No duplicate cards
     const cardIds = Object.keys(h.state.cards);

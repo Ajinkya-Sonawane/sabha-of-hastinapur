@@ -162,6 +162,7 @@ export class GameEngine {
         const player = this.player(state, command.playerId);
         player.connected = command.connected;
         player.lastSeenAt = now;
+        if (command.connected) player.left = false;
         return;
       }
       case "SET_READY":

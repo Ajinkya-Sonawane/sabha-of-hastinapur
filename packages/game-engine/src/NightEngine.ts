@@ -43,7 +43,7 @@ export function createActionContext(state: InternalGameState, actorId: PlayerId,
     },
     moveCard: (cardId, destination) => moveCard(state, cardId, destination),
     record: (type, payload) => {
-      const event = recordEvent(state, type, actorId, { role: actorStartingRole, ...payload }, now);
+      const event = recordEvent(state, type, actorId, { ...payload, actorRole: actorStartingRole }, now);
       sink?.push(event);
     },
   };
