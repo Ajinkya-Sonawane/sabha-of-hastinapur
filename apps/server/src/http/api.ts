@@ -11,7 +11,7 @@ import {
 import type { ServerConfig } from "../config";
 import type { RoomManager } from "../rooms/RoomManager";
 import { parseCookies, SESSION_COOKIE, sessionCookie } from "../security/sessions";
-import { originAllowed, RateLimiter } from "../security/validation";
+import { clientAddress, originAllowed, RateLimiter } from "../security/validation";
 
 const STATUS: Partial<Record<GameErrorCode, number>> = {
   ROOM_NOT_FOUND: 404,
@@ -19,6 +19,7 @@ const STATUS: Partial<Record<GameErrorCode, number>> = {
   GAME_FULL: 409,
   GAME_ALREADY_STARTED: 409,
   RATE_LIMITED: 429,
+  SERVER_BUSY: 503,
   UNAUTHENTICATED: 401,
   INTERNAL: 500,
 };
@@ -51,16 +52,15 @@ async function readJson(req: IncomingMessage, limit = 4096): Promise<unknown> {
   }
 }
 
-function clientIp(req: IncomingMessage): string {
-  return req.socket.remoteAddress ?? "unknown";
-}
-
 /**
  * Minimal HTTP surface: create, join, room summary, health.
  * Everything else happens over the WebSocket.
  */
-export function createApiHandler(rooms: RoomManager, config: Pick<ServerConfig, "cookieSecure" | "allowedOrigins">) {
+export function createApiHandler(rooms: RoomManager, config: Pick<ServerConfig, "cookieSecure" | "allowedOrigins" | "trustProxy">) {
   const limiter = new RateLimiter(20, 0.5);
+  // Room lookups are cheap but reveal which codes exist; throttle scanning.
+  const lookups = new RateLimiter(30, 1);
+  const clientIp = (req: IncomingMessage) => clientAddress(req.headers["x-forwarded-for"], req.socket.remoteAddress, config.trustProxy);
   const startedAt = Date.now();
 
   return async function handle(req: IncomingMessage, res: ServerResponse): Promise<boolean> {
@@ -74,7 +74,7 @@ export function createApiHandler(rooms: RoomManager, config: Pick<ServerConfig, 
       }
 
       if (req.method === "GET" && url.pathname === "/api/health") {
-        json(res, 200, { ok: true, rooms: rooms.roomCount(), uptimeSeconds: Math.round((Date.now() - startedAt) / 1000) });
+        json(res, 200, { ok: true, uptimeSeconds: Math.round((Date.now() - startedAt) / 1000) });
         return true;
       }
 
@@ -116,6 +116,7 @@ export function createApiHandler(rooms: RoomManager, config: Pick<ServerConfig, 
 
       const roomMatch = url.pathname.match(/^\/api\/games\/([^/]+)$/);
       if (req.method === "GET" && roomMatch) {
+        if (!lookups.take(clientIp(req))) return fail(res, "RATE_LIMITED"), true;
         const code = roomCodeSchema.safeParse(decodeURIComponent(roomMatch[1]));
         const summary = code.success ? rooms.summary(code.data) : null;
         if (!summary) return fail(res, "ROOM_NOT_FOUND"), true;

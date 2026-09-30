@@ -54,6 +54,8 @@ interface Room {
 }
 
 const MAX_TIMEOUT = 2 ** 31 - 1;
+/** Back-off before re-running a timer whose write failed (e.g. the database blipped). */
+const TICK_RETRY_MS = 2_000;
 
 /**
  * Owns every live room. All state changes for a room are serialised through
@@ -65,6 +67,7 @@ export class RoomManager {
   private readonly codes = new Map<string, GameId>();
   private readonly listeners = new Set<(change: RoomChange) => void>();
   private sweeper?: NodeJS.Timeout;
+  private closed = false;
 
   constructor(
     readonly engine: GameEngine,
@@ -72,6 +75,7 @@ export class RoomManager {
     readonly sessions: SessionStore,
     private readonly analytics: AnalyticsSink,
     private readonly clock: () => number = Date.now,
+    private readonly maxRooms = Infinity,
   ) {}
 
   onChange(listener: (change: RoomChange) => void): () => void {
@@ -114,6 +118,7 @@ export class RoomManager {
   // -------------------------------------------------------------------------
 
   async createGame(config: CreateGameConfig): Promise<PlayerSession> {
+    if (this.rooms.size >= this.maxRooms) throw new GameError("SERVER_BUSY");
     const gameId = asGameId(randomUUID());
     const playerId = asPlayerId(randomUUID());
     let roomCode = generateRoomCode();
@@ -209,6 +214,8 @@ export class RoomManager {
           console.error(`[room ${room.state.roomCode}] invariant violation`, error);
         } else {
           console.error(`[room ${room.state.roomCode}] command failed`, error);
+          // The state did not change, and a failed TICK would otherwise leave the room with no timer.
+          if (!room.timer) this.schedule(room, TICK_RETRY_MS);
         }
         return { ok: false, requestId: rid, code: "INTERNAL", message: DEFAULT_ERROR_MESSAGES.INTERNAL };
       }
@@ -255,6 +262,7 @@ export class RoomManager {
   }
 
   async shutdown(): Promise<void> {
+    this.closed = true;
     if (this.sweeper) clearInterval(this.sweeper);
     for (const room of this.rooms.values()) if (room.timer) clearTimeout(room.timer);
     await Promise.all([...this.rooms.values()].map((r) => r.chain.catch(() => undefined)));
@@ -319,12 +327,13 @@ export class RoomManager {
     if (next.phase === "ENDED") this.drop(room);
   }
 
-  private schedule(room: Room): void {
+  private schedule(room: Room, minDelay = 0): void {
     if (room.timer) clearTimeout(room.timer);
     room.timer = undefined;
+    if (this.closed || this.rooms.get(room.gameId) !== room) return;
     const deadline = this.engine.nextDeadline(room.state);
     if (deadline === null) return;
-    const delay = Math.min(MAX_TIMEOUT, Math.max(0, deadline - this.clock()) + 5);
+    const delay = Math.min(MAX_TIMEOUT, Math.max(minDelay, deadline - this.clock() + 5));
     room.timer = setTimeout(() => {
       room.timer = undefined;
       void this.execute(room.gameId, null, null, { type: "TICK" });

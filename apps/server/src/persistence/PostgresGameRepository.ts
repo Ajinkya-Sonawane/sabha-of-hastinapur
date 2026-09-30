@@ -18,6 +18,8 @@ export class PostgresGameRepository implements GameRepository {
 
   constructor(connectionString: string) {
     this.pool = new pg.Pool({ connectionString, max: 10 });
+    // Hosted Postgres drops idle connections; an unhandled pool error would kill the process.
+    this.pool.on("error", (error) => console.warn("[pg] idle client error:", error.message));
   }
 
   async save(state: InternalGameState, expectedVersion: number | null, sessions: Record<PlayerId, string>) {

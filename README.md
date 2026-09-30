@@ -31,6 +31,10 @@ To test several players on one machine, give each player a separate browser prof
 | `COOKIE_SECURE` | on in production | `Secure` flag on the session cookie |
 | `ALLOWED_ORIGINS` | same-origin | Comma-separated extra origins for the API and WebSocket |
 | `SERVE_WEB` | `1` | Set to `0` to run the API/WebSocket without Next.js |
+| `TRUST_PROXY` | `0` | Number of reverse proxies in front of the server. Set to `1` behind a host's load balancer so rate limits use the client IP from `X-Forwarded-For` |
+| `MAX_ROOMS` | `500` | Live rooms allowed at once. New rooms get `SERVER_BUSY` (503) beyond this |
+| `MAX_SOCKETS_PER_IP` | `30` | Concurrent WebSocket connections per client IP |
+| `SOCKET_ROOMS` | on in dev | Allow `room.create` / `room.join` over the socket. Browsers use HTTP, so this is off in production |
 | `TIMER_ROLE_REVEAL`, `TIMER_NIGHT_ACTION`, `TIMER_DISCUSSION`, `TIMER_VOTING`, `TIMER_SPECIAL_ELIMINATION`, `TIMER_LOBBY_GRACE` | 15, 30, 300, 30, 30, 120 | Phase timers, in seconds |
 
 For PostgreSQL, run `DATABASE_URL=… npm run migrate -w @sabha/server`, which applies `apps/server/db/migrations`.

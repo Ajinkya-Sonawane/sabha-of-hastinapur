@@ -13,6 +13,7 @@ export type GameErrorCode =
   | "NOT_ENOUGH_PLAYERS"
   | "UNAUTHENTICATED"
   | "RATE_LIMITED"
+  | "SERVER_BUSY"
   | "INTERNAL";
 
 export const DEFAULT_ERROR_MESSAGES: Record<GameErrorCode, string> = {
@@ -30,5 +31,6 @@ export const DEFAULT_ERROR_MESSAGES: Record<GameErrorCode, string> = {
   NOT_ENOUGH_PLAYERS: "At least five connected players are needed.",
   UNAUTHENTICATED: "Your seat could not be found. Please join again.",
   RATE_LIMITED: "Slow down a little and try again.",
+  SERVER_BUSY: "The Sabha is full right now. Please try again in a few minutes.",
   INTERNAL: "Something went wrong. Please try again.",
 };
