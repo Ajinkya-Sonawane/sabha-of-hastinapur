@@ -62,3 +62,19 @@ export function originAllowed(origin: string | undefined, host: string | undefin
     return false;
   }
 }
+
+/**
+ * The caller's IP. Behind `trustProxy` reverse proxies (e.g. a host's load
+ * balancer) the socket address is the proxy's, so read X-Forwarded-For instead.
+ * Each proxy appends the address it saw, so entries further left than
+ * `trustProxy` from the right may be forged by the client and are ignored.
+ */
+export function clientAddress(forwardedFor: string | string[] | undefined, remoteAddress: string | undefined, trustProxy: number): string {
+  const header = Array.isArray(forwardedFor) ? forwardedFor.join(",") : forwardedFor;
+  if (trustProxy > 0 && header) {
+    const hops = header.split(",").map((s) => s.trim()).filter(Boolean);
+    const ip = hops[Math.max(0, hops.length - trustProxy)];
+    if (ip) return ip;
+  }
+  return remoteAddress ?? "unknown";
+}

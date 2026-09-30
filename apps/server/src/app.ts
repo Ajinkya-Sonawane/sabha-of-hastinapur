@@ -46,7 +46,7 @@ export async function createSabhaServer(options: CreateServerOptions): Promise<S
   analytics ??= new MemoryAnalytics();
 
   const engine = new GameEngine({ timers: config.timers, rng: options.rng });
-  const rooms = new RoomManager(engine, repo, new SessionStore(), analytics, options.clock);
+  const rooms = new RoomManager(engine, repo, new SessionStore(), analytics, options.clock, config.maxRooms);
   const restored = await rooms.restore();
   if (restored) console.log(`[sabha] restored ${restored} active game(s)`);
   rooms.startSweeper();

@@ -12,7 +12,7 @@ import type { Server, Socket } from "socket.io";
 import type { ServerConfig } from "../config";
 import type { RoomChange, RoomManager } from "../rooms/RoomManager";
 import { parseCookies, SESSION_COOKIE, type SessionRecord } from "../security/sessions";
-import { originAllowed, parseEnvelope, RateLimiter } from "../security/validation";
+import { clientAddress, originAllowed, parseEnvelope, RateLimiter } from "../security/validation";
 import { envelope } from "./envelope";
 import { toEngineCommand } from "./handlers";
 
@@ -20,6 +20,7 @@ type Ack = (ack: CommandAck) => void;
 
 interface SocketData {
   session?: SessionRecord;
+  ip?: string;
 }
 
 const key = (gameId: GameId, playerId: PlayerId) => `${gameId}:${playerId}`;
@@ -31,15 +32,23 @@ const key = (gameId: GameId, playerId: PlayerId) => `${gameId}:${playerId}`;
 export class GameGateway {
   private readonly sockets = new Map<string, Set<Socket>>();
   private readonly limiter = new RateLimiter(40, 8);
+  /** Room create/join per IP — the per-socket limiter alone is bypassed by opening more sockets. */
+  private readonly roomLimiter = new RateLimiter(20, 0.5);
+  private readonly socketsPerIp = new Map<string, number>();
 
   constructor(
     private readonly io: Server,
     private readonly rooms: RoomManager,
-    private readonly config: Pick<ServerConfig, "allowedOrigins">,
+    private readonly config: Pick<ServerConfig, "allowedOrigins" | "trustProxy" | "maxSocketsPerIp" | "socketRooms">,
   ) {
     io.use((socket, next) => {
       const { origin, host } = socket.handshake.headers;
       if (!originAllowed(origin, host, config.allowedOrigins)) return next(new Error("origin not allowed"));
+      const ip = clientAddress(socket.handshake.headers["x-forwarded-for"], socket.handshake.address, config.trustProxy);
+      const open = this.socketsPerIp.get(ip) ?? 0;
+      if (open >= config.maxSocketsPerIp) return next(new Error("too many connections"));
+      this.socketsPerIp.set(ip, open + 1);
+      (socket.data as SocketData).ip = ip;
       next();
     });
     io.on("connection", (socket) => void this.onConnection(socket));
@@ -51,7 +60,10 @@ export class GameGateway {
     const session = this.rooms.sessions.resolve(cookies[SESSION_COOKIE]);
 
     socket.on(WS_CHANNEL, (raw: unknown, ack?: Ack) => void this.onMessage(socket, raw, ack));
-    socket.on("disconnect", () => void this.onDisconnect(socket));
+    socket.on("disconnect", () => {
+      this.release(socket);
+      void this.onDisconnect(socket);
+    });
 
     if (session && this.rooms.getState(session.gameId)?.players[session.playerId]) {
       await this.bind(socket, session);
@@ -68,8 +80,17 @@ export class GameGateway {
     const set = this.sockets.get(k) ?? new Set();
     set.add(socket);
     this.sockets.set(k, set);
-    await this.rooms.setConnected(session.gameId, session.playerId, true);
+    // Restore first so it arrives before the broadcast triggered by the reconnect.
     this.restore(socket);
+    await this.rooms.setConnected(session.gameId, session.playerId, true);
+  }
+
+  private release(socket: Socket) {
+    const ip = (socket.data as SocketData).ip;
+    if (!ip) return;
+    const open = (this.socketsPerIp.get(ip) ?? 1) - 1;
+    if (open > 0) this.socketsPerIp.set(ip, open);
+    else this.socketsPerIp.delete(ip);
   }
 
   private unbind(socket: Socket): SessionRecord | undefined {
@@ -133,6 +154,10 @@ export class GameGateway {
 
       // Socket-only create/join bind this connection. Browsers should prefer the
       // HTTP endpoints, which also set the HttpOnly session cookie for reconnects.
+      if (command.type === "room.create" || command.type === "room.join") {
+        if (!this.config.socketRooms) throw new GameError("INVALID_REQUEST");
+        if (!this.roomLimiter.take(data.ip ?? socket.id)) throw new GameError("RATE_LIMITED");
+      }
       if (command.type === "room.create") {
         const p = command.payload as { playerName: string; playerCount: number; mode: never };
         const s = await this.rooms.createGame({ hostName: p.playerName, playerCount: p.playerCount, mode: p.mode });

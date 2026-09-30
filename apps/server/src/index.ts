@@ -26,6 +26,8 @@ async function main() {
   };
   process.on("SIGINT", shutdown);
   process.on("SIGTERM", shutdown);
+  // One stray rejection must not take down every live game on the server.
+  process.on("unhandledRejection", (reason) => console.error("[sabha] unhandled rejection", reason));
 }
 
 main().catch((error) => {
