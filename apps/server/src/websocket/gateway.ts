@@ -39,12 +39,12 @@ export class GameGateway {
   constructor(
     private readonly io: Server,
     private readonly rooms: RoomManager,
-    private readonly config: Pick<ServerConfig, "allowedOrigins" | "trustProxy" | "maxSocketsPerIp" | "socketRooms">,
+    private readonly config: Pick<ServerConfig, "allowedOrigins" | "trustProxy" | "clientIpHeader" | "maxSocketsPerIp" | "socketRooms">,
   ) {
     io.use((socket, next) => {
       const { origin, host } = socket.handshake.headers;
       if (!originAllowed(origin, host, config.allowedOrigins)) return next(new Error("origin not allowed"));
-      const ip = clientAddress(socket.handshake.headers["x-forwarded-for"], socket.handshake.address, config.trustProxy);
+      const ip = clientAddress(socket.handshake.headers, socket.handshake.address, config);
       const open = this.socketsPerIp.get(ip) ?? 0;
       if (open >= config.maxSocketsPerIp) return next(new Error("too many connections"));
       this.socketsPerIp.set(ip, open + 1);
