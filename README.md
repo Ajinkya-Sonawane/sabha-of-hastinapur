@@ -31,6 +31,7 @@ To test several players on one machine, give each player a separate browser prof
 | `COOKIE_SECURE` | on in production | `Secure` flag on the session cookie |
 | `ALLOWED_ORIGINS` | same-origin | Comma-separated extra origins for the API and WebSocket |
 | `SERVE_WEB` | `1` | Set to `0` to run the API/WebSocket without Next.js |
+| `CLIENT_IP_HEADER` | — | Header a trusted edge sets to the visitor's IP, used for rate limits. On Render (behind Cloudflare) set `cf-connecting-ip`. Overrides `TRUST_PROXY` |
 | `TRUST_PROXY` | `0` | Number of reverse proxies in front of the server. Set to `1` behind a host's load balancer so rate limits use the client IP from `X-Forwarded-For` |
 | `MAX_ROOMS` | `500` | Live rooms allowed at once. New rooms get `SERVER_BUSY` (503) beyond this |
 | `MAX_SOCKETS_PER_IP` | `30` | Concurrent WebSocket connections per client IP |

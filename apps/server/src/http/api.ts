@@ -56,11 +56,11 @@ async function readJson(req: IncomingMessage, limit = 4096): Promise<unknown> {
  * Minimal HTTP surface: create, join, room summary, health.
  * Everything else happens over the WebSocket.
  */
-export function createApiHandler(rooms: RoomManager, config: Pick<ServerConfig, "cookieSecure" | "allowedOrigins" | "trustProxy">) {
+export function createApiHandler(rooms: RoomManager, config: Pick<ServerConfig, "cookieSecure" | "allowedOrigins" | "trustProxy" | "clientIpHeader">) {
   const limiter = new RateLimiter(20, 0.5);
   // Room lookups are cheap but reveal which codes exist; throttle scanning.
   const lookups = new RateLimiter(30, 1);
-  const clientIp = (req: IncomingMessage) => clientAddress(req.headers["x-forwarded-for"], req.socket.remoteAddress, config.trustProxy);
+  const clientIp = (req: IncomingMessage) => clientAddress(req.headers, req.socket.remoteAddress, config);
   const startedAt = Date.now();
 
   return async function handle(req: IncomingMessage, res: ServerResponse): Promise<boolean> {

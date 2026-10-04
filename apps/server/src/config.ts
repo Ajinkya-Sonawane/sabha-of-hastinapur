@@ -11,6 +11,11 @@ export interface ServerConfig {
   allowedOrigins: string[];
   /** Reverse proxies in front of the server; 0 means use the socket address. */
   trustProxy: number;
+  /**
+   * Header a trusted edge sets to the visitor's IP (e.g. cf-connecting-ip on
+   * Render, which sits behind Cloudflare). Takes precedence over trustProxy.
+   */
+  clientIpHeader?: string;
   /** Live rooms allowed at once, so room spam cannot exhaust memory. */
   maxRooms: number;
   maxSocketsPerIp: number;
@@ -41,6 +46,7 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): ServerConfig {
     cookieSecure: env.COOKIE_SECURE ? env.COOKIE_SECURE === "1" : !dev,
     allowedOrigins: (env.ALLOWED_ORIGINS ?? "").split(",").map((s) => s.trim()).filter(Boolean),
     trustProxy: count(env.TRUST_PROXY, 0),
+    clientIpHeader: env.CLIENT_IP_HEADER?.trim().toLowerCase() || undefined,
     maxRooms: num(env.MAX_ROOMS, 500),
     maxSocketsPerIp: num(env.MAX_SOCKETS_PER_IP, 30),
     socketRooms: env.SOCKET_ROOMS ? env.SOCKET_ROOMS === "1" : dev,

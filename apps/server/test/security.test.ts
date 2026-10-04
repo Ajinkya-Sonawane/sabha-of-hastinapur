@@ -39,19 +39,38 @@ function open(base: string): Promise<Socket> {
 }
 
 describe("clientAddress", () => {
+  const xff = (value?: string) => (value === undefined ? {} : { "x-forwarded-for": value });
+
   it("uses the socket address unless proxies are trusted", () => {
-    expect(clientAddress("1.1.1.1", "10.0.0.1", 0)).toBe("10.0.0.1");
-    expect(clientAddress(undefined, "10.0.0.1", 1)).toBe("10.0.0.1");
+    expect(clientAddress(xff("1.1.1.1"), "10.0.0.1", { trustProxy: 0 })).toBe("10.0.0.1");
+    expect(clientAddress(xff(), "10.0.0.1", { trustProxy: 1 })).toBe("10.0.0.1");
   });
 
   it("takes the address the trusted proxy saw, ignoring forged entries to its left", () => {
-    expect(clientAddress("6.6.6.6, 2.2.2.2", "10.0.0.1", 1)).toBe("2.2.2.2");
-    expect(clientAddress("6.6.6.6, 2.2.2.2, 3.3.3.3", "10.0.0.1", 2)).toBe("2.2.2.2");
-    expect(clientAddress("2.2.2.2", "10.0.0.1", 3)).toBe("2.2.2.2");
+    expect(clientAddress(xff("6.6.6.6, 2.2.2.2"), "10.0.0.1", { trustProxy: 1 })).toBe("2.2.2.2");
+    expect(clientAddress(xff("6.6.6.6, 2.2.2.2, 3.3.3.3"), "10.0.0.1", { trustProxy: 2 })).toBe("2.2.2.2");
+    expect(clientAddress(xff("2.2.2.2"), "10.0.0.1", { trustProxy: 3 })).toBe("2.2.2.2");
+  });
+
+  it("prefers the edge's client-IP header when configured", () => {
+    const headers = { "cf-connecting-ip": "2.2.2.2", "x-forwarded-for": "6.6.6.6, 2.2.2.2, 3.3.3.3" };
+    expect(clientAddress(headers, "10.0.0.1", { trustProxy: 1, clientIpHeader: "cf-connecting-ip" })).toBe("2.2.2.2");
+    // Missing or malformed header falls back to the other rules.
+    expect(clientAddress(xff("6.6.6.6, 3.3.3.3"), "10.0.0.1", { trustProxy: 1, clientIpHeader: "cf-connecting-ip" })).toBe("3.3.3.3");
+    expect(clientAddress({ "cf-connecting-ip": "6.6.6.6, 2.2.2.2" }, "10.0.0.1", { trustProxy: 0, clientIpHeader: "cf-connecting-ip" })).toBe("10.0.0.1");
   });
 });
 
 describe("abuse limits", () => {
+  it("rate-limits per edge-reported client IP, ignoring a forged X-Forwarded-For", async () => {
+    const base = await start({ clientIpHeader: "cf-connecting-ip" });
+    const join = (ip: string, i: number) =>
+      post(base, "/api/games/ZZZZ22/join", { playerName: "Probe" }, { "CF-Connecting-IP": ip, "X-Forwarded-For": `198.51.100.${i}` });
+    for (let i = 0; i < 20; i++) expect((await join("2.2.2.2", i)).status).toBe(404);
+    expect((await join("2.2.2.2", 99)).status).toBe(429);
+    expect((await join("3.3.3.3", 100)).status).toBe(404);
+  });
+
   it("rate-limits per forwarded client IP behind a proxy, not per proxy", async () => {
     const base = await start({ trustProxy: 1 });
     const create = (ip: string) =>
