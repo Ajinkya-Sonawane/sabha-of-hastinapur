@@ -82,7 +82,7 @@ export function JoinForm() {
               onChange={(e) => setName(e.target.value)}
               maxLength={20}
               autoComplete="nickname"
-              placeholder="Rahul"
+              placeholder="Your name"
               className="min-h-[52px] rounded-2xl border border-line bg-panel px-4 text-lg placeholder:text-muted/60 focus:border-saffron"
             />
           </label>
