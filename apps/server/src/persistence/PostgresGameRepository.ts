@@ -94,8 +94,21 @@ export class PostgresGameRepository implements GameRepository {
   }
 
   async loadActive(): Promise<StoredGame[]> {
+    return this.loadWhere("TRUE", []);
+  }
+
+  async loadOne(by: { gameId: string } | { roomCode: string } | { sessionHash: string }): Promise<StoredGame | null> {
+    const [clause, value] =
+      "gameId" in by ? ["id = $1", by.gameId]
+      : "roomCode" in by ? ["room_code = $1", by.roomCode]
+      : ["id = (SELECT game_id FROM game_players WHERE session_token_hash = $1 LIMIT 1)", by.sessionHash];
+    return (await this.loadWhere(clause, [value]))[0] ?? null;
+  }
+
+  private async loadWhere(clause: string, params: unknown[]): Promise<StoredGame[]> {
     const games = await this.pool.query<{ id: string; state: InternalGameState }>(
-      "SELECT id, state FROM games WHERE phase <> 'ENDED' AND updated_at > now() - interval '24 hours'",
+      `SELECT id, state FROM games WHERE phase <> 'ENDED' AND updated_at > now() - interval '24 hours' AND ${clause}`,
+      params,
     );
     const out: StoredGame[] = [];
     for (const row of games.rows) {

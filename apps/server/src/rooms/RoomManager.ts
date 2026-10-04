@@ -19,8 +19,8 @@ import {
   type RoomSummaryResponse,
 } from "@sabha/protocol";
 import type { AnalyticsSink } from "../persistence/analytics";
-import type { GameRepository } from "../persistence/GameRepository";
-import { generateRoomCode, SessionStore } from "../security/sessions";
+import { ConcurrencyError, type GameRepository, type StoredGame } from "../persistence/GameRepository";
+import { generateRoomCode, hashSessionToken, SessionStore, type SessionRecord } from "../security/sessions";
 
 export interface CreateGameConfig {
   playerCount: number;
@@ -68,6 +68,8 @@ export class RoomManager {
   private readonly listeners = new Set<(change: RoomChange) => void>();
   private sweeper?: NodeJS.Timeout;
   private closed = false;
+  /** Whether this process holds a live socket for the player (set by the gateway). */
+  private presence: (gameId: GameId, playerId: PlayerId) => boolean = () => false;
 
   constructor(
     readonly engine: GameEngine,
@@ -99,8 +101,39 @@ export class RoomManager {
     return this.rooms.size;
   }
 
-  summary(roomCode: string): RoomSummaryResponse | null {
-    const gameId = this.gameIdForCode(roomCode);
+  setPresence(presence: (gameId: GameId, playerId: PlayerId) => boolean): void {
+    this.presence = presence;
+  }
+
+  /**
+   * Game id for a room code. Falls back to the database for a room this
+   * process has not seen, e.g. one the previous instance created while a
+   * deploy was handing over.
+   */
+  async findByCode(roomCode: string): Promise<GameId | undefined> {
+    const code = roomCode.toUpperCase();
+    const known = this.codes.get(code);
+    if (known) return known;
+    const stored = await this.repo.loadOne({ roomCode: code });
+    if (!stored) return undefined;
+    return (this.rooms.get(stored.state.gameId) ?? this.adopt(stored)).gameId;
+  }
+
+  /** Session for a cookie token, with the same database fallback as findByCode. */
+  async resolveSession(token: string | undefined): Promise<SessionRecord | null> {
+    const known = this.sessions.resolve(token);
+    if (known || !token) return known;
+    const stored = await this.repo.loadOne({ sessionHash: hashSessionToken(token) });
+    if (!stored) return null;
+    const room = this.rooms.get(stored.state.gameId);
+    // Holding an older copy means the player joined on another instance.
+    if (room) await this.run(room, () => this.reload(room));
+    else this.adopt(stored);
+    return this.sessions.resolve(token);
+  }
+
+  async summary(roomCode: string): Promise<RoomSummaryResponse | null> {
+    const gameId = await this.findByCode(roomCode);
     const state = gameId && this.rooms.get(gameId)?.state;
     if (!state) return null;
     const count = Object.keys(state.players).length;
@@ -144,19 +177,25 @@ export class RoomManager {
   }
 
   async joinGame(roomCode: string, playerName: string): Promise<PlayerSession> {
-    const gameId = this.gameIdForCode(roomCode);
+    const gameId = await this.findByCode(roomCode);
     const room = gameId && this.rooms.get(gameId);
     if (!room) throw new GameError("ROOM_NOT_FOUND");
     const playerId = asPlayerId(randomUUID());
     let token = "";
     await this.run(room, async () => {
-      const next = this.engine.apply(
-        room.state,
-        { type: "ADD_PLAYER", player: { id: playerId, displayName: playerName, sessionId: randomUUID() } },
-        this.clock(),
-      );
+      // Issued first so the session hash is saved with the new player.
       token = this.sessions.issue({ gameId: room.gameId, playerId }).token;
-      await this.commit(room, next, { type: "ADD_PLAYER", player: { id: playerId, displayName: playerName, sessionId: "" } }, playerId);
+      try {
+        await this.applyAndCommit(
+          room,
+          { type: "ADD_PLAYER", player: { id: playerId, displayName: playerName, sessionId: randomUUID() } },
+          playerId,
+          { type: "ADD_PLAYER", player: { id: playerId, displayName: playerName, sessionId: "" } },
+        );
+      } catch (error) {
+        this.sessions.revokePlayer(room.gameId, playerId);
+        throw error;
+      }
     });
     return { gameId: room.gameId, roomCode: room.state.roomCode, playerId, token };
   }
@@ -201,8 +240,7 @@ export class RoomManager {
         if (seen) return { ...seen, duplicate: true } as CommandAck;
       }
       try {
-        const next = this.engine.apply(room.state, command, this.clock());
-        await this.commit(room, next, command, playerId);
+        await this.applyAndCommit(room, command, playerId);
         const ack: CommandAck = { ok: true, requestId: rid };
         if (key) room.processed.set(key, ack);
         return ack;
@@ -230,14 +268,7 @@ export class RoomManager {
 
   async restore(): Promise<number> {
     const stored = await this.repo.loadActive();
-    for (const { state, sessions } of stored) {
-      for (const p of Object.values(state.players)) p.connected = false;
-      const room = this.register(state);
-      for (const [playerId, hash] of Object.entries(sessions)) {
-        if (hash) this.sessions.restore(hash, { gameId: state.gameId, playerId: playerId as PlayerId });
-      }
-      this.schedule(room);
-    }
+    for (const game of stored) this.adopt(game);
     return stored.length;
   }
 
@@ -281,6 +312,67 @@ export class RoomManager {
     this.rooms.set(state.gameId, room);
     this.codes.set(state.roomCode, state.gameId);
     return room;
+  }
+
+  /**
+   * Take over a stored game, or refresh `room` in place. Connection flags
+   * describe another process's sockets, so they are reset to this one's, and
+   * everyone not connected here gets a full lobby grace period to reconnect.
+   */
+  private adopt({ state, sessions }: StoredGame, room?: Room): Room {
+    const now = this.clock();
+    for (const p of Object.values(state.players)) {
+      const connected = this.presence(state.gameId, p.id);
+      if (!connected) p.lastSeenAt = Math.max(p.lastSeenAt, now);
+      p.connected = connected;
+    }
+    if (room) {
+      room.state = state;
+      room.processed.clear();
+      room.processedPhase = `${state.round}:${state.phase}`;
+      this.codes.set(state.roomCode, state.gameId);
+    } else {
+      room = this.register(state);
+    }
+    for (const [playerId, hash] of Object.entries(sessions)) {
+      if (hash) this.sessions.restore(hash, { gameId: state.gameId, playerId: playerId as PlayerId });
+    }
+    this.schedule(room);
+    return room;
+  }
+
+  /** Catch up with a newer copy another instance saved. False if the game is gone. Call inside run(). */
+  private async reload(room: Room): Promise<boolean> {
+    const stored = await this.repo.loadOne({ gameId: room.gameId });
+    if (!stored) {
+      this.drop(room);
+      return false;
+    }
+    const prev = room.state;
+    if (stored.state.stateVersion > prev.stateVersion) {
+      this.adopt(stored, room);
+      this.emit({ prev, next: room.state, command: null, actorId: null });
+    } else {
+      for (const [playerId, hash] of Object.entries(stored.sessions)) {
+        if (hash) this.sessions.restore(hash, { gameId: room.gameId, playerId: playerId as PlayerId });
+      }
+    }
+    return true;
+  }
+
+  /**
+   * Apply a command and persist it. If another instance wrote first (both run
+   * briefly during a deploy), catch up from the database and try once more.
+   */
+  private async applyAndCommit(room: Room, command: EngineCommand, actorId: PlayerId | null, logged: EngineCommand = command) {
+    try {
+      await this.commit(room, this.engine.apply(room.state, command, this.clock()), logged, actorId);
+    } catch (error) {
+      if (!(error instanceof ConcurrencyError)) throw error;
+      console.warn(`[room ${room.state.roomCode}] saved elsewhere since loaded; reloading`);
+      if (!(await this.reload(room))) throw new GameError("ROOM_NOT_FOUND");
+      await this.commit(room, this.engine.apply(room.state, command, this.clock()), logged, actorId);
+    }
   }
 
   private drop(room: Room): void {

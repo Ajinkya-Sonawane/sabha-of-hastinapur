@@ -21,6 +21,12 @@ export interface GameRepository {
    */
   save(state: InternalGameState, expectedVersion: number | null, sessions: Record<PlayerId, string>): Promise<void>;
   loadActive(): Promise<StoredGame[]>;
+  /**
+   * One active game, found by id, room code or a player's session hash. Lets a
+   * process pick up games written by another instance (e.g. during a deploy,
+   * when the old and new instance briefly run side by side).
+   */
+  loadOne(by: { gameId: string } | { roomCode: string } | { sessionHash: string }): Promise<StoredGame | null>;
   delete(gameId: string): Promise<void>;
   /** Retention: completed games after 24h, event logs after 72h. */
   deleteExpired(now: number): Promise<void>;
@@ -41,6 +47,15 @@ export class InMemoryGameRepository implements GameRepository {
 
   async loadActive() {
     return [...this.games.values()].map((g) => structuredClone(g));
+  }
+
+  async loadOne(by: { gameId: string } | { roomCode: string } | { sessionHash: string }) {
+    const game = [...this.games.values()].find((g) =>
+      "gameId" in by ? g.state.gameId === by.gameId
+      : "roomCode" in by ? g.state.roomCode === by.roomCode
+      : Object.values(g.sessions).includes(by.sessionHash),
+    );
+    return game && game.state.phase !== "ENDED" ? structuredClone(game) : null;
   }
 
   async delete(gameId: string) {

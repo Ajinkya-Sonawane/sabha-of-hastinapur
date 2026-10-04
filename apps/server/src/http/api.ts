@@ -101,8 +101,8 @@ export function createApiHandler(rooms: RoomManager, config: Pick<ServerConfig, 
         if (!body.success) return fail(res, "INVALID_REQUEST", body.error.issues[0]?.message), true;
 
         // Already seated in this room (e.g. a reload)? Keep the same seat.
-        const existing = rooms.sessions.resolve(parseCookies(req.headers.cookie)[SESSION_COOKIE]);
-        const gameId = rooms.gameIdForCode(code.data);
+        const existing = await rooms.resolveSession(parseCookies(req.headers.cookie)[SESSION_COOKIE]);
+        const gameId = await rooms.findByCode(code.data);
         if (existing && gameId && existing.gameId === gameId && rooms.getState(gameId)?.players[existing.playerId]) {
           json(res, 200, { gameId, roomCode: code.data, playerId: existing.playerId } satisfies SessionResponse);
           return true;
@@ -118,10 +118,10 @@ export function createApiHandler(rooms: RoomManager, config: Pick<ServerConfig, 
       if (req.method === "GET" && roomMatch) {
         if (!lookups.take(clientIp(req))) return fail(res, "RATE_LIMITED"), true;
         const code = roomCodeSchema.safeParse(decodeURIComponent(roomMatch[1]));
-        const summary = code.success ? rooms.summary(code.data) : null;
+        const summary = code.success ? await rooms.summary(code.data) : null;
         if (!summary) return fail(res, "ROOM_NOT_FOUND"), true;
         // Tell the browser whether its cookie already holds a seat here (no identity leak).
-        const existing = rooms.sessions.resolve(parseCookies(req.headers.cookie)[SESSION_COOKIE]);
+        const existing = await rooms.resolveSession(parseCookies(req.headers.cookie)[SESSION_COOKIE]);
         const gameId = rooms.gameIdForCode(summary.roomCode);
         json(res, 200, { ...summary, seated: !!existing && existing.gameId === gameId && !!rooms.getState(gameId!)?.players[existing.playerId] });
         return true;
