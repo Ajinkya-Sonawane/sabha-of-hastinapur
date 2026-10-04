@@ -50,7 +50,7 @@ export default function CreatePage() {
             autoComplete="nickname"
             autoFocus
             className="min-h-[52px] rounded-2xl border border-line bg-panel px-4 text-lg text-parchment placeholder:text-muted/60 focus:border-saffron"
-            placeholder="Ajinkya"
+            placeholder="Your name"
           />
         </label>
 

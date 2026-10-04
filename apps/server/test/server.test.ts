@@ -102,11 +102,11 @@ async function openClient(name: string, cookie: string, playerId: string): Promi
 }
 
 async function seatTable(n: number, mode = "BEGINNER") {
-  const created = await post("/api/games", { playerName: "Ajinkya", playerCount: n, mode });
+  const created = await post("/api/games", { playerName: "Host", playerCount: n, mode });
   expect(created.status).toBe(201);
   expect(created.cookie).toMatch(/^sabha_session=/);
   const roomCode = created.body.roomCode as string;
-  const clients = [await openClient("Ajinkya", created.cookie, created.body.playerId)];
+  const clients = [await openClient("Host", created.cookie, created.body.playerId)];
   const names = ["Rahul", "Priya", "Amit", "Neha", "Kiran", "Meera", "Arjun", "Divya", "Sanjay"];
   for (let i = 1; i < n; i++) {
     const joined = await post(`/api/games/${roomCode}/join`, { playerName: names[i - 1] });
@@ -170,12 +170,12 @@ describe("HTTP API", () => {
 
   it("validates create and join", async () => {
     expect((await post("/api/games", { playerName: "A", playerCount: 5, mode: "BEGINNER" })).status).toBe(400);
-    expect((await post("/api/games", { playerName: "Ajinkya", playerCount: 11, mode: "BEGINNER" })).status).toBe(400);
-    const created = await post("/api/games", { playerName: "Ajinkya", playerCount: 5, mode: "BEGINNER" });
+    expect((await post("/api/games", { playerName: "Host", playerCount: 11, mode: "BEGINNER" })).status).toBe(400);
+    const created = await post("/api/games", { playerName: "Host", playerCount: 5, mode: "BEGINNER" });
     const code = created.body.roomCode;
     expect(code).toMatch(/^[A-Z]{4}[0-9]{2}$/);
     expect((await post(`/api/games/ZZZZ99/join`, { playerName: "Rahul" })).status).toBe(404);
-    expect((await post(`/api/games/${code}/join`, { playerName: "ajinkya" })).status).toBe(409);
+    expect((await post(`/api/games/${code}/join`, { playerName: "host" })).status).toBe(409);
     expect((await post(`/api/games/${code.toLowerCase()}/join`, { playerName: "Rahul" })).status).toBe(200);
 
     const summary = await (await fetch(`${base}/api/games/${code}`)).json();
@@ -186,7 +186,7 @@ describe("HTTP API", () => {
     const res = await fetch(`${base}/api/games`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ playerName: "Ajinkya", playerCount: 5, mode: "BEGINNER" }),
+      body: JSON.stringify({ playerName: "Host", playerCount: 5, mode: "BEGINNER" }),
     });
     const cookie = res.headers.get("set-cookie")!;
     expect(cookie).toContain("HttpOnly");
@@ -197,7 +197,7 @@ describe("HTTP API", () => {
     const res = await fetch(`${base}/api/games`, {
       method: "POST",
       headers: { "Content-Type": "application/json", Origin: "https://evil.example" },
-      body: JSON.stringify({ playerName: "Ajinkya", playerCount: 5, mode: "BEGINNER" }),
+      body: JSON.stringify({ playerName: "Host", playerCount: 5, mode: "BEGINNER" }),
     });
     expect(res.status).toBe(400);
   });
