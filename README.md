@@ -35,6 +35,7 @@ To test several players on one machine, give each player a separate browser prof
 | `TRUST_PROXY` | `0` | Number of reverse proxies in front of the server. Set to `1` behind a host's load balancer so rate limits use the client IP from `X-Forwarded-For` |
 | `MAX_ROOMS` | `500` | Live rooms allowed at once. New rooms get `SERVER_BUSY` (503) beyond this |
 | `MAX_SOCKETS_PER_IP` | `30` | Concurrent WebSocket connections per client IP |
+| `KEEPALIVE_URL` | — | URL the server requests every 10 minutes so hosts that sleep when idle stay awake. On Render's free tier set it to `https://<app>.onrender.com/api/health` |
 | `SOCKET_ROOMS` | on in dev | Allow `room.create` / `room.join` over the socket. Browsers use HTTP, so this is off in production |
 | `TIMER_ROLE_REVEAL`, `TIMER_NIGHT_ACTION`, `TIMER_DISCUSSION`, `TIMER_VOTING`, `TIMER_SPECIAL_ELIMINATION`, `TIMER_LOBBY_GRACE` | 15, 30, 300, 30, 30, 120 | Phase timers, in seconds |
 

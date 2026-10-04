@@ -21,6 +21,8 @@ export interface ServerConfig {
   maxSocketsPerIp: number;
   /** Allow room.create/room.join over the socket (browsers use HTTP). */
   socketRooms: boolean;
+  /** URL this server requests every 10 minutes so free hosts that sleep when idle (Render) stay awake. */
+  keepAliveUrl?: string;
   timers: GameTimers;
 }
 
@@ -50,6 +52,7 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): ServerConfig {
     maxRooms: num(env.MAX_ROOMS, 500),
     maxSocketsPerIp: num(env.MAX_SOCKETS_PER_IP, 30),
     socketRooms: env.SOCKET_ROOMS ? env.SOCKET_ROOMS === "1" : dev,
+    keepAliveUrl: env.KEEPALIVE_URL || undefined,
     timers: {
       ROLE_REVEAL: num(env.TIMER_ROLE_REVEAL, DEFAULT_TIMERS.ROLE_REVEAL),
       NIGHT_ACTION: num(env.TIMER_NIGHT_ACTION, DEFAULT_TIMERS.NIGHT_ACTION),

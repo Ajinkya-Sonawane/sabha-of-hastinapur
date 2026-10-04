@@ -53,17 +53,22 @@ export class GameGateway {
     });
     io.on("connection", (socket) => void this.onConnection(socket));
     rooms.onChange((change) => this.broadcast(change));
+    rooms.setPresence((gameId, playerId) => this.sockets.has(key(gameId, playerId)));
   }
 
   private async onConnection(socket: Socket) {
     const cookies = parseCookies(socket.handshake.headers.cookie);
-    const session = this.rooms.sessions.resolve(cookies[SESSION_COOKIE]);
-
     socket.on(WS_CHANNEL, (raw: unknown, ack?: Ack) => void this.onMessage(socket, raw, ack));
     socket.on("disconnect", () => {
       this.release(socket);
       void this.onDisconnect(socket);
     });
+
+    const session = await this.rooms.resolveSession(cookies[SESSION_COOKIE]).catch((error) => {
+      console.error("[gateway] session lookup failed", error);
+      return null;
+    });
+    if (socket.disconnected) return;
 
     if (session && this.rooms.getState(session.gameId)?.players[session.playerId]) {
       await this.bind(socket, session);

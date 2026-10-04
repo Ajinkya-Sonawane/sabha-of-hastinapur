@@ -19,6 +19,15 @@ async function main() {
   const port = await server.listen();
   console.log(`[sabha] listening on http://localhost:${port} (${config.dev ? "dev" : "production"}${config.databaseUrl ? ", postgres" : ", in-memory"})`);
 
+  if (config.keepAliveUrl) {
+    // Render's free tier sleeps after 15 idle minutes. The request leaves through
+    // the public URL, so it arrives as inbound traffic and resets that clock.
+    const url = config.keepAliveUrl;
+    setInterval(() => {
+      fetch(url, { signal: AbortSignal.timeout(10_000) }).catch((error) => console.warn("[keepalive]", error.message));
+    }, 10 * 60_000).unref();
+  }
+
   const shutdown = async () => {
     console.log("[sabha] shutting down");
     await server.close();
