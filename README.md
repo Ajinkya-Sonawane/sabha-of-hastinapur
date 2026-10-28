@@ -1,4 +1,4 @@
-# Sabha of Hastinapur
+# Sabha of Hastinapur - https://kurusabha.in/
 
 A Mahabharata-inspired hidden-role party game for 5–10 players (in the style of One Night Ultimate Werewolf). Each player uses their own phone, and nothing needs to be installed. Phones handle secret information, night actions, voting and the reveal. The discussion happens face to face.
 
