@@ -1,27 +1,82 @@
 @import "tailwindcss";
 
+/*
+ * Material Design 3 dark scheme, generated from a saffron seed (#EEA83F).
+ * Components use the M3 colour roles below. The short aliases at the end
+ * (ink, panel, line, …) are kept so older class names map onto those roles.
+ */
 @theme {
-  --color-ink: #14110d;
-  --color-panel: #1f1a14;
-  --color-panel-2: #2a231b;
-  --color-line: #3d3328;
-  --color-parchment: #f4ead5;
-  --color-muted: #bcae95;
-  --color-saffron: #eea83f;
-  --color-gold: #d9b45a;
-  --color-dharma: #6aa6f0;
-  --color-kaurava: #ec6b63;
-  --color-kuru: #e4c35a;
-  --color-neutral: #b3aa9f;
+  /* M3 colour roles */
+  --color-primary: #ffb95c;
+  --color-on-primary: #462a00;
+  --color-primary-container: #643f00;
+  --color-on-primary-container: #ffddb5;
+  --color-secondary: #dec3a1;
+  --color-on-secondary: #3e2d16;
+  --color-secondary-container: #56432b;
+  --color-on-secondary-container: #fbdebc;
+  --color-tertiary: #b9cea0;
+  --color-on-tertiary: #253515;
+  --color-tertiary-container: #3b4c2a;
+  --color-on-tertiary-container: #d5eabb;
+  --color-error: #ffb4ab;
+  --color-on-error: #690005;
+  --color-error-container: #93000a;
+  --color-on-error-container: #ffdad6;
+  --color-success: #a6d6a0;
 
+  --color-surface: #18120b;
+  --color-surface-dim: #18120b;
+  --color-surface-container-lowest: #120d07;
+  --color-surface-container-low: #201b13;
+  --color-surface-container: #251f17;
+  --color-surface-container-high: #2f2921;
+  --color-surface-container-highest: #3a342b;
+  --color-on-surface: #ede0d0;
+  --color-on-surface-variant: #d3c4b0;
+  --color-outline: #9c8f7c;
+  --color-outline-variant: #4f4536;
+  --color-scrim: #000000;
+
+  /* Extended colours: one per faction, each with a tonal container */
+  --color-dharma: #a8c8ff;
+  --color-dharma-container: #244876;
+  --color-on-dharma-container: #d6e3ff;
+  --color-kaurava: #ffb3ab;
+  --color-kaurava-container: #73332d;
+  --color-on-kaurava-container: #ffdad6;
+  --color-kuru: #e3c54a;
+  --color-kuru-container: #534600;
+  --color-on-kuru-container: #ffe17a;
+  --color-neutral: #cbc5bd;
+  --color-neutral-container: #4a4640;
+  --color-on-neutral-container: #e8e1d9;
+
+  /* Aliases */
+  --color-ink: var(--color-on-primary);
+  --color-panel: var(--color-surface-container);
+  --color-panel-2: var(--color-surface-container-high);
+  --color-line: var(--color-outline-variant);
+  --color-parchment: var(--color-on-surface);
+  --color-muted: var(--color-on-surface-variant);
+  --color-saffron: var(--color-primary);
+  --color-gold: var(--color-secondary);
+
+  /* M3 type: Roboto for UI, a serif brand face for character names */
+  --font-sans: Roboto, "Noto Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
   --font-serif: "Iowan Old Style", "Palatino Linotype", Palatino, "Book Antiqua", Georgia, ui-serif, serif;
-  --font-sans: system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans", sans-serif;
 
-  --animate-rise: rise 420ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  /* M3 elevation (dark theme: tonal surface plus a soft shadow) */
+  --shadow-elevation-1: 0 1px 2px rgb(0 0 0 / 0.3), 0 1px 3px 1px rgb(0 0 0 / 0.15);
+  --shadow-elevation-2: 0 1px 2px rgb(0 0 0 / 0.3), 0 2px 6px 2px rgb(0 0 0 / 0.15);
+  --shadow-elevation-3: 0 1px 3px rgb(0 0 0 / 0.3), 0 4px 8px 3px rgb(0 0 0 / 0.15);
+
+  /* M3 motion: emphasized decelerate */
+  --animate-rise: rise 400ms cubic-bezier(0.05, 0.7, 0.1, 1) both;
   --animate-glow: glow 2.4s ease-in-out infinite;
 
   @keyframes rise {
-    from { opacity: 0; transform: translateY(12px) scale(0.98); }
+    from { opacity: 0; transform: translateY(16px); }
     to { opacity: 1; transform: none; }
   }
   @keyframes glow {
@@ -36,23 +91,41 @@
 
 html,
 body {
-  background: var(--color-ink);
-  color: var(--color-parchment);
+  background: var(--color-surface);
+  color: var(--color-on-surface);
   font-family: var(--font-sans);
   -webkit-tap-highlight-color: transparent;
   min-width: 320px;
 }
 
-body {
-  background-image:
-    radial-gradient(ellipse at top, rgba(238, 168, 63, 0.10), transparent 60%),
-    radial-gradient(ellipse at bottom, rgba(106, 166, 240, 0.05), transparent 55%);
-  background-attachment: fixed;
+/*
+ * M3 state layer: a translucent overlay of the content colour.
+ * Hover 8%, focus and pressed 10%.
+ */
+.state-layer {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
 }
+.state-layer::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: currentColor;
+  opacity: 0;
+  transition: opacity 150ms cubic-bezier(0.2, 0, 0, 1);
+  pointer-events: none;
+  z-index: -1;
+}
+@media (hover: hover) {
+  .state-layer:hover:not(:disabled)::after { opacity: 0.08; }
+}
+.state-layer:focus-visible::after,
+.state-layer:active:not(:disabled)::after { opacity: 0.1; }
 
 :focus-visible {
-  outline: 3px solid var(--color-saffron);
-  outline-offset: 3px;
+  outline: 3px solid var(--color-secondary);
+  outline-offset: 2px;
 }
 
 @media (prefers-reduced-motion: reduce) {

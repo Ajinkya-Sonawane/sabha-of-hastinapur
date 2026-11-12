@@ -1,7 +1,10 @@
 "use client";
 
+import type { ReactNode } from "react";
 import type { KnownInformation, PublicPlayer, RoleId } from "@sabha/protocol";
 import { FACTION_PRESENTATION, ROLE_PRESENTATION } from "@/roles/rolePresentation";
+import { FactionIcon } from "./FactionBadge";
+import { RoleAvatar } from "./RoleCard";
 
 const READINGS: Record<string, string> = {
   WITH_PANDAVAS: "stands WITH the Pandavas",
@@ -14,15 +17,15 @@ const READINGS: Record<string, string> = {
   UNKNOWN: "has UNKNOWN training",
 };
 
-export function describeKnowledge(k: KnownInformation, nameOf: (id: string) => string): { icon: string; text: string } {
-  const role = (r: RoleId) => ROLE_PRESENTATION[r].name.toUpperCase();
+export function describeKnowledge(k: KnownInformation, nameOf: (id: string) => string): { icon: ReactNode; text: string } {
+  const role = (r: RoleId) => ROLE_PRESENTATION[r].name;
   switch (k.kind) {
     case "ROLE":
-      return { icon: ROLE_PRESENTATION[k.role].icon, text: `${nameOf(k.playerId)} is ${role(k.role)}` };
+      return { icon: <RoleAvatar role={k.role} />, text: `${nameOf(k.playerId)} is ${role(k.role)}` };
     case "FACTION":
-      return { icon: FACTION_PRESENTATION[k.faction].icon, text: `${nameOf(k.playerId)} is ${FACTION_PRESENTATION[k.faction].label.toUpperCase()}` };
+      return { icon: <FactionIcon faction={k.faction} className="h-6 w-6" />, text: `${nameOf(k.playerId)} is ${FACTION_PRESENTATION[k.faction].label}` };
     case "CENTER":
-      return { icon: "🂠", text: `Centre card ${k.slot + 1} is ${role(k.role)}` };
+      return { icon: <RoleAvatar role={k.role} />, text: `Centre card ${k.slot + 1} is ${role(k.role)}` };
     case "MOVEMENT_COUNT":
       return {
         icon: "👁️",
@@ -65,13 +68,13 @@ export function KnowledgeList({
   const nameOf = (id: string) => (id === meId ? "You" : players.find((p) => p.id === id)?.displayName ?? "Someone");
   return (
     <div className="w-full">
-      <p className="mb-2 text-xs uppercase tracking-[0.3em] text-muted">{title}</p>
-      <ul className="flex flex-col gap-2">
+      <p className="mb-2 text-xs font-medium tracking-[0.5px] text-on-surface-variant">{title}</p>
+      <ul className="overflow-hidden rounded-xl bg-surface-container-high">
         {items.map((k, i) => {
           const { icon, text } = describeKnowledge(k, nameOf);
           return (
-            <li key={i} className="flex items-start gap-3 rounded-2xl border border-line bg-panel-2/60 px-4 py-3 text-[15px] leading-snug">
-              <span aria-hidden className="text-lg leading-none">{icon}</span>
+            <li key={i} className="flex min-h-14 items-center gap-4 border-b border-outline-variant px-4 py-2 text-base leading-6 last:border-b-0">
+              <span aria-hidden className="flex w-10 shrink-0 items-center justify-center text-2xl leading-none">{icon}</span>
               <span>{text}</span>
             </li>
           );

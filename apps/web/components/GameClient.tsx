@@ -120,7 +120,7 @@ export function GameClient({ roomCode }: { roomCode: string }) {
       )}
       {body}
       {error && (
-        <div role="alert" className="fixed inset-x-4 bottom-6 z-50 mx-auto max-w-[440px] rounded-2xl border border-kaurava/50 bg-ink/95 px-4 py-3 text-center text-sm text-kaurava shadow-xl">
+        <div role="alert" className="fixed inset-x-4 bottom-6 z-50 mx-auto max-w-[440px] rounded bg-on-surface px-4 py-3.5 text-sm text-surface shadow-elevation-3">
           {error.message}
         </div>
       )}

@@ -17,7 +17,7 @@ import { send } from "@/websocket/socket";
 import { Countdown } from "./Countdown";
 import { KnowledgeList } from "./KnowledgeList";
 import { PlayerAvatar } from "./PlayerAvatar";
-import { RoleCard } from "./RoleCard";
+import { RoleAvatar, RoleCard } from "./RoleCard";
 import { BottomActions, Button, ErrorText, Eyebrow, Screen, Title } from "./ui";
 
 type NightPrompt = Extract<AvailableAction, { kind: "NIGHT_ACTION" }>;
@@ -92,11 +92,12 @@ export function NightAction({ game, me, prompt }: { game: PublicGameView; me: Pr
   const header = (
     <header className="flex flex-col items-center gap-1 text-center">
       <Eyebrow>🌙 Your turn</Eyebrow>
-      <p className="text-sm uppercase tracking-[0.25em] text-muted">You are</p>
-      <button type="button" onClick={() => setShowCard((v) => !v)} className="font-serif text-3xl uppercase tracking-[0.08em]" aria-expanded={showCard}>
-        {p.icon} {p.name}
+      <p className="text-sm tracking-wide text-muted">You are</p>
+      <button type="button" onClick={() => setShowCard((v) => !v)} className="state-layer flex items-center gap-3 rounded-full py-1 pl-1 pr-5 font-serif text-[28px] leading-9" aria-expanded={showCard}>
+        <RoleAvatar role={role} deck={game.deck} size="lg" />
+        {p.name}
       </button>
-      <p className="text-xs uppercase tracking-[0.3em] text-gold">{p.title}</p>
+      <p className="text-xs tracking-wide text-gold">{p.title}</p>
       <div className="mt-2">
         <Countdown deadline={prompt.deadline} size="sm" />
       </div>
@@ -182,7 +183,7 @@ export function NightAction({ game, me, prompt }: { game: PublicGameView; me: Pr
               role="radio"
               aria-checked={selected[0] === c}
               onClick={() => setSelected([c])}
-              className={`min-h-[64px] rounded-2xl border text-xl font-semibold ${selected[0] === c ? "border-saffron bg-saffron/15 text-saffron" : "border-line bg-panel"}`}
+              className={`min-h-[64px] rounded-xl border text-xl font-semibold ${selected[0] === c ? "border-primary bg-primary-container text-on-primary-container" : "border-line bg-panel"}`}
             >
               {c}
             </button>
@@ -217,7 +218,7 @@ export function NightAction({ game, me, prompt }: { game: PublicGameView; me: Pr
                 type="button"
                 aria-pressed={on}
                 onClick={() => toggle(String(slot))}
-                className={`flex aspect-[2/3] items-center justify-center rounded-2xl border-2 font-serif text-2xl ${on ? "border-saffron bg-saffron/15 text-saffron" : "border-gold/40 bg-panel text-gold/70"}`}
+                className={`flex aspect-[2/3] items-center justify-center rounded-xl border-2 font-serif text-2xl ${on ? "border-primary bg-primary-container text-on-primary-container" : "border-gold/40 bg-panel text-gold/70"}`}
               >
                 {slot + 1}
               </button>
@@ -302,7 +303,7 @@ export function PlayerPicker({
               type="button"
               aria-pressed={on}
               onClick={() => onToggle(pl.id)}
-              className={`flex min-h-[56px] w-full items-center gap-3 rounded-2xl border px-4 text-left text-base transition ${on ? "border-saffron bg-saffron/15" : "border-line bg-panel hover:border-gold/50"}`}
+              className={`flex min-h-[56px] w-full items-center gap-3 rounded-xl border px-4 text-left text-base transition ${on ? "border-primary bg-primary-container text-on-primary-container" : "border-line bg-panel hover:border-gold/50"}`}
             >
               <span className="w-5 text-right font-mono text-sm text-muted">{i + 1}.</span>
               <PlayerAvatar player={pl} size="sm" />

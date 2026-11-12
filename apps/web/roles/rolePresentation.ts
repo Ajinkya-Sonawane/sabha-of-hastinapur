@@ -7,11 +7,12 @@ import {
 
 export { FACTION_PRESENTATION, ROLE_PRESENTATION };
 
-export const FACTION_STYLES: Record<Faction, { text: string; border: string; bg: string }> = {
-  [Faction.DHARMA]: { text: "text-dharma", border: "border-dharma/60", bg: "bg-dharma/10" },
-  [Faction.KAURAVA]: { text: "text-kaurava", border: "border-kaurava/60", bg: "bg-kaurava/10" },
-  [Faction.KURU]: { text: "text-kuru", border: "border-kuru/60", bg: "bg-kuru/10" },
-  [Faction.INDEPENDENT]: { text: "text-neutral", border: "border-neutral/60", bg: "bg-neutral/10" },
+/** Each faction is an M3 extended colour: an accent plus a tonal container. */
+export const FACTION_STYLES: Record<Faction, { text: string; border: string; bg: string; container: string; onContainer: string }> = {
+  [Faction.DHARMA]: { text: "text-dharma", border: "border-dharma/60", bg: "bg-dharma/10", container: "bg-dharma-container", onContainer: "text-on-dharma-container" },
+  [Faction.KAURAVA]: { text: "text-kaurava", border: "border-kaurava/60", bg: "bg-kaurava/10", container: "bg-kaurava-container", onContainer: "text-on-kaurava-container" },
+  [Faction.KURU]: { text: "text-kuru", border: "border-kuru/60", bg: "bg-kuru/10", container: "bg-kuru-container", onContainer: "text-on-kuru-container" },
+  [Faction.INDEPENDENT]: { text: "text-neutral", border: "border-neutral/60", bg: "bg-neutral/10", container: "bg-neutral-container", onContainer: "text-on-neutral-container" },
 };
 
 export function roleName(role: RoleId): string {

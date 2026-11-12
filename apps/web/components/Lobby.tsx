@@ -38,7 +38,7 @@ export function Lobby({ game, me }: { game: PublicGameView; me: PrivatePlayerVie
       </header>
 
       <div className="text-center">
-        <p className="font-mono text-5xl font-semibold tracking-[0.18em] text-saffron" aria-label={`Room code ${game.roomCode.split("").join(" ")}`}>
+        <p className="font-mono text-5xl font-semibold tracking-wide text-saffron" aria-label={`Room code ${game.roomCode.split("").join(" ")}`}>
           {game.roomCode}
         </p>
         <p className="mt-2 text-sm text-muted">Share this code with everyone.</p>
@@ -51,7 +51,7 @@ export function Lobby({ game, me }: { game: PublicGameView; me: PrivatePlayerVie
 
       <Panel className="flex flex-col gap-1">
         <div className="mb-2 flex items-baseline justify-between">
-          <p className="text-xs uppercase tracking-[0.3em] text-muted">Players</p>
+          <p className="text-xs tracking-wide text-muted">Players</p>
           <p className="font-mono text-sm text-parchment">
             {game.players.length} / {game.capacity}
           </p>
@@ -63,9 +63,9 @@ export function Lobby({ game, me }: { game: PublicGameView; me: PrivatePlayerVie
               <span className="flex-1 truncate text-base">
                 {p.displayName}
                 {p.id === me.playerId && <span className="text-muted"> (you)</span>}
-                {p.id === game.hostPlayerId && <span className="ml-2 text-xs uppercase tracking-widest text-gold">host</span>}
+                {p.id === game.hostPlayerId && <span className="ml-2 text-xs tracking-wide text-gold">host</span>}
               </span>
-              <span className={p.connected ? "text-emerald-400" : "text-kuru"} aria-label={p.connected ? "connected" : "disconnected"}>
+              <span className={p.connected ? "text-success" : "text-kuru"} aria-label={p.connected ? "connected" : "disconnected"}>
                 {p.connected ? "✓" : "…"}
               </span>
             </li>
@@ -79,7 +79,7 @@ export function Lobby({ game, me }: { game: PublicGameView; me: PrivatePlayerVie
         </ul>
       </Panel>
 
-      <p className="rounded-2xl border border-gold/30 bg-gold/5 px-4 py-3 text-sm leading-snug text-muted">
+      <p className="rounded-xl border border-gold/30 bg-gold/5 px-4 py-3 text-sm leading-snug text-muted">
         <span className="font-semibold text-parchment">House rule:</span> if the vote ties, <em>every</em> tied player is removed.
         Mode: {MODE_PRESENTATION[game.mode].label}.
       </p>

@@ -25,7 +25,7 @@ export function RoleReveal({ game, me }: { game: PublicGameView; me: PrivatePlay
         <button
           type="button"
           onClick={() => setRevealed(true)}
-          className="mt-4 flex h-56 w-40 items-center justify-center rounded-[24px] border-2 border-gold/60 bg-[repeating-linear-gradient(45deg,rgba(217,180,90,0.08)_0_10px,transparent_10px_20px)] font-serif text-xl uppercase tracking-[0.2em] text-gold shadow-lg transition active:scale-95"
+          className="mt-4 flex h-56 w-40 items-center justify-center rounded-[24px] border-2 border-gold/60 bg-[repeating-linear-gradient(45deg,rgba(217,180,90,0.08)_0_10px,transparent_10px_20px)] font-serif text-xl tracking-wide text-gold shadow-lg transition active:scale-95"
           aria-label="Reveal your identity"
         >
           Reveal

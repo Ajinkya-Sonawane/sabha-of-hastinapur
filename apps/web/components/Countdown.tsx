@@ -26,8 +26,8 @@ export function Countdown({ deadline, size = "md", label = "Time remaining" }: {
   const sizes = { sm: "text-lg", md: "text-3xl", lg: "text-6xl" };
   return (
     <div className="flex flex-col items-center" role="timer" aria-live="off" aria-label={`${label}: ${format(remaining)}`}>
-      {size !== "sm" && <span className="text-xs uppercase tracking-[0.3em] text-muted">{label}</span>}
-      <span className={`font-mono tabular-nums ${sizes[size]} ${urgent ? "text-kaurava" : "text-parchment"}`}>{format(remaining)}</span>
+      {size !== "sm" && <span className="text-xs tracking-wide text-muted">{label}</span>}
+      <span className={`font-mono tabular-nums ${sizes[size]} ${urgent ? "text-error" : "text-parchment"}`}>{format(remaining)}</span>
     </div>
   );
 }

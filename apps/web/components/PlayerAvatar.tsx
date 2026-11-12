@@ -1,6 +1,6 @@
 import type { PublicPlayer } from "@sabha/protocol";
 
-const TONES = ["bg-saffron/20 text-saffron", "bg-dharma/20 text-dharma", "bg-kuru/20 text-kuru", "bg-kaurava/20 text-kaurava", "bg-neutral/20 text-neutral"];
+const TONES = ["bg-saffron/20 text-saffron", "bg-dharma/20 text-dharma", "bg-kuru/20 text-kuru", "bg-kaurava/20 text-error", "bg-neutral/20 text-neutral"];
 
 export function PlayerAvatar({ player, size = "md" }: { player: Pick<PublicPlayer, "displayName" | "seat">; size?: "sm" | "md" }) {
   const initials = player.displayName

@@ -34,7 +34,7 @@ export function NightWaiting({ game, me }: { game: PublicGameView; me: PrivatePl
       <Eyebrow>Night</Eyebrow>
       <Title>Your eyes are closed.</Title>
       <p className="font-serif text-lg text-muted">The Sabha is in darkness.</p>
-      <p className="text-sm uppercase tracking-[0.3em] text-muted animate-glow" aria-live="polite">
+      <p className="text-sm tracking-wide text-muted animate-glow" aria-live="polite">
         Waiting…
       </p>
       <BottomActions>
