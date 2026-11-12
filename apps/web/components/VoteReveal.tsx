@@ -36,7 +36,7 @@ export function VoteReveal({ game, result }: { game: PublicGameView; result: Vot
           <tbody>
             {rows.map(([id, n]) => (
               <tr key={id} className={result.primaryTargets.includes(id as never) ? "text-saffron" : "text-muted"}>
-                <td className="py-1 font-serif text-2xl uppercase">{nameOf(id)}</td>
+                <td className="py-1 font-serif text-2xl">{nameOf(id)}</td>
                 <td className="py-1 text-right font-mono text-2xl">{n}</td>
               </tr>
             ))}
@@ -52,7 +52,7 @@ export function VoteReveal({ game, result }: { game: PublicGameView; result: Vot
       <Eyebrow>The Sabha has spoken</Eyebrow>
       {rows.slice(0, shown).map(([id, n], i) => (
         <div key={id} className="animate-rise">
-          <p className={`font-serif uppercase ${i === 0 ? "text-5xl text-saffron" : "text-3xl text-parchment"}`}>{nameOf(id)}</p>
+          <p className={`font-serif ${i === 0 ? "text-5xl text-saffron" : "text-3xl text-parchment"}`}>{nameOf(id)}</p>
           <p className="text-muted">
             {n} vote{n === 1 ? "" : "s"}
           </p>

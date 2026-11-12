@@ -1,4 +1,6 @@
 import { Faction, FACTION_PRESENTATION, ROLE_IDS, ROLE_PRESENTATION } from "@sabha/protocol";
+import { FactionIcon } from "@/components/FactionBadge";
+import { RoleCard } from "@/components/RoleCard";
 import { LinkButton } from "@/components/ui";
 
 const FACTION_ORDER = [Faction.DHARMA, Faction.KAURAVA, Faction.KURU, Faction.INDEPENDENT];
@@ -9,7 +11,7 @@ export default function HowToPlay() {
   return (
     <article className="flex flex-col gap-6 pb-8 animate-rise">
       <header>
-        <p className="text-xs font-semibold uppercase tracking-[0.3em] text-saffron">How to play</p>
+        <p className="text-xs font-semibold tracking-wide text-saffron">How to play</p>
         <h1 className="mt-2 font-serif text-3xl">Players are people. Cards are identities.</h1>
       </header>
 
@@ -36,7 +38,7 @@ export default function HowToPlay() {
         </li>
       </ol>
 
-      <section className="rounded-3xl border border-line bg-panel/80 p-5 text-[15px] leading-relaxed">
+      <section className="rounded-xl border border-line bg-panel/80 p-5 text-[15px] leading-relaxed">
         <h2 className="mb-2 font-serif text-xl">The two sides</h2>
         <p>
           <span aria-hidden>🔵</span> <strong>Dharma</strong> wins if at least one Kaurava Conspirator (Duryodhana, Shakuni,
@@ -54,20 +56,14 @@ export default function HowToPlay() {
 
       {FACTION_ORDER.map((faction) => (
         <section key={faction}>
-          <h2 className="mb-3 text-xs uppercase tracking-[0.3em] text-muted">
-            {FACTION_PRESENTATION[faction].icon} {FACTION_PRESENTATION[faction].label}
+          <h2 className="mb-3 flex items-center gap-2 text-base font-medium tracking-[0.15px] text-on-surface">
+            <FactionIcon faction={faction} /> {FACTION_PRESENTATION[faction].label}
           </h2>
           <ul className="flex flex-col gap-2">
             {ROLE_IDS.filter((r) => ROLE_PRESENTATION[r].faction === faction).map((r) => {
-              const p = ROLE_PRESENTATION[r];
               return (
-                <li key={r} className="rounded-2xl border border-line bg-panel px-4 py-3">
-                  <p className="font-serif text-lg">
-                    <span aria-hidden>{p.icon}</span> {p.name} <span className="text-xs uppercase tracking-[0.2em] text-gold">{p.title}</span>
-                  </p>
-                  <p className="text-sm text-muted">Night: {p.night}</p>
-                  {p.ability && <p className="text-sm text-muted">{p.ability}</p>}
-                  <p className="text-sm">Goal: {p.objective}</p>
+                <li key={r}>
+                  <RoleCard role={r} deck={[]} variant="detail" />
                 </li>
               );
             })}

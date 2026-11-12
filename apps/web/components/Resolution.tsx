@@ -6,6 +6,7 @@ import { ROLE_PRESENTATION } from "@/roles/rolePresentation";
 import { send } from "@/websocket/socket";
 import { Countdown } from "./Countdown";
 import { PlayerPicker } from "./NightAction";
+import { RoleAvatar } from "./RoleCard";
 import { VoteReveal } from "./VoteReveal";
 import { BottomActions, Button, ErrorText, Eyebrow, Screen, Title } from "./ui";
 
@@ -35,9 +36,12 @@ function FinalActPicker({ game, me, act }: { game: PublicGameView; me: PrivatePl
   return (
     <Screen>
       <header className="text-center">
+        <div className="mb-3 flex justify-center">
+          <RoleAvatar role={act.role} deck={game.deck} size="xl" />
+        </div>
         <Eyebrow>You have fallen</Eyebrow>
         <Title className="mt-2">
-          {role.icon} As {role.name}, choose one to fall with you.
+          As {role.name}, choose one to fall with you.
         </Title>
         <div className="mt-3 flex justify-center">
           <Countdown deadline={act.deadline} size="sm" />

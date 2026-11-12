@@ -42,20 +42,20 @@ export default function CreatePage() {
         </header>
 
         <label className="flex flex-col gap-2">
-          <span className="text-xs uppercase tracking-[0.3em] text-muted">Your name</span>
+          <span className="text-xs tracking-wide text-muted">Your name</span>
           <input
             value={name}
             onChange={(e) => setName(e.target.value)}
             maxLength={20}
             autoComplete="nickname"
             autoFocus
-            className="min-h-[52px] rounded-2xl border border-line bg-panel px-4 text-lg text-parchment placeholder:text-muted/60 focus:border-saffron"
+            className="min-h-14 rounded border border-outline bg-transparent px-4 text-base text-parchment placeholder:text-muted/60 focus:border-saffron"
             placeholder="Your name"
           />
         </label>
 
         <fieldset className="flex flex-col gap-2">
-          <legend className="mb-2 text-xs uppercase tracking-[0.3em] text-muted">Players</legend>
+          <legend className="mb-2 text-xs tracking-wide text-muted">Players</legend>
           <div className="grid grid-cols-6 gap-2" role="radiogroup" aria-label="Number of players">
             {COUNTS.map((n) => (
               <button
@@ -64,7 +64,7 @@ export default function CreatePage() {
                 role="radio"
                 aria-checked={count === n}
                 onClick={() => setCount(n)}
-                className={`min-h-[52px] rounded-xl border text-lg font-semibold ${count === n ? "border-saffron bg-saffron/15 text-saffron" : "border-line bg-panel"}`}
+                className={`min-h-[52px] rounded-xl border text-lg font-semibold ${count === n ? "border-primary bg-primary-container text-on-primary-container" : "border-line bg-panel"}`}
               >
                 {n}
               </button>
@@ -73,7 +73,7 @@ export default function CreatePage() {
         </fieldset>
 
         <fieldset className="flex flex-col gap-2">
-          <legend className="mb-2 text-xs uppercase tracking-[0.3em] text-muted">Game mode</legend>
+          <legend className="mb-2 text-xs tracking-wide text-muted">Game mode</legend>
           <div className="flex flex-col gap-2" role="radiogroup" aria-label="Game mode">
             {MODES.map((m) => (
               <button
@@ -82,7 +82,7 @@ export default function CreatePage() {
                 role="radio"
                 aria-checked={mode === m}
                 onClick={() => setMode(m)}
-                className={`flex min-h-[56px] items-start gap-3 rounded-2xl border px-4 py-3 text-left ${mode === m ? "border-saffron bg-saffron/10" : "border-line bg-panel"}`}
+                className={`flex min-h-[56px] items-start gap-3 rounded-xl border px-4 py-3 text-left ${mode === m ? "border-primary bg-primary-container text-on-primary-container" : "border-line bg-panel"}`}
               >
                 <span aria-hidden className={`mt-0.5 ${mode === m ? "text-saffron" : "text-muted"}`}>{mode === m ? "●" : "○"}</span>
                 <span>

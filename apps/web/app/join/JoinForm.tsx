@@ -52,7 +52,7 @@ export function JoinForm() {
         </header>
 
         <label className="flex flex-col gap-2">
-          <span className="text-xs uppercase tracking-[0.3em] text-muted">Room code</span>
+          <span className="text-xs tracking-wide text-muted">Room code</span>
           <input
             value={code}
             onChange={(e) => setCode(clean(e.target.value))}
@@ -62,7 +62,7 @@ export function JoinForm() {
             spellCheck={false}
             placeholder="KURU42"
             aria-describedby="code-hint"
-            className="min-h-[64px] rounded-2xl border border-line bg-panel px-4 text-center font-mono text-3xl uppercase tracking-[0.4em] text-saffron placeholder:text-muted/40 focus:border-saffron"
+            className="min-h-16 rounded border border-outline bg-transparent px-4 text-center font-mono text-3xl tracking-wide text-saffron placeholder:text-muted/40 focus:border-saffron"
           />
           <span id="code-hint" className="text-sm text-muted">
             Six characters, from the host&apos;s phone.
@@ -71,19 +71,19 @@ export function JoinForm() {
 
         {seated ? (
           <div className="flex flex-col gap-3">
-            <p className="rounded-2xl border border-emerald-400/40 bg-emerald-400/10 px-4 py-3 text-sm">You already have a seat in this Sabha.</p>
+            <p className="rounded-xl border border-success/40 bg-success/10 px-4 py-3 text-sm">You already have a seat in this Sabha.</p>
             <Button onClick={() => router.push(`/game/${code}`)}>Return to my seat</Button>
           </div>
         ) : (
           <label className="flex flex-col gap-2">
-            <span className="text-xs uppercase tracking-[0.3em] text-muted">Your name</span>
+            <span className="text-xs tracking-wide text-muted">Your name</span>
             <input
               value={name}
               onChange={(e) => setName(e.target.value)}
               maxLength={20}
               autoComplete="nickname"
               placeholder="Your name"
-              className="min-h-[52px] rounded-2xl border border-line bg-panel px-4 text-lg placeholder:text-muted/60 focus:border-saffron"
+              className="min-h-14 rounded border border-outline bg-transparent px-4 text-base placeholder:text-muted/60 focus:border-saffron"
             />
           </label>
         )}

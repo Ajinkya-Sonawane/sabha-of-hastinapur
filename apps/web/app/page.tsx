@@ -1,38 +1,41 @@
-import Link from "next/link";
+import type { RoleId } from "@sabha/protocol";
+import { RoleFigure } from "@/components/RoleFigure";
+import { LinkButton } from "@/components/ui";
+
+const HERO: { role: RoleId; tone: string; tilt: string }[] = [
+  { role: "DURYODHANA", tone: "bg-kaurava-container", tilt: "-rotate-6 translate-y-2" },
+  { role: "KRISHNA", tone: "bg-dharma-container", tilt: "z-10 -translate-y-1 shadow-elevation-3" },
+  { role: "BHISHMA", tone: "bg-kuru-container", tilt: "rotate-6 translate-y-2" },
+];
 
 export default function Landing() {
   return (
     <section className="flex flex-1 flex-col animate-rise">
       <div className="flex flex-1 flex-col items-center justify-center text-center">
-        <p aria-hidden className="mb-6 text-5xl">🪷</p>
-        <p className="text-xs font-semibold uppercase tracking-[0.5em] text-saffron">Sabha</p>
-        <h1 className="mt-2 font-serif text-5xl leading-none tracking-[0.04em]">
-          <span className="block text-lg uppercase tracking-[0.5em] text-muted">of</span>
-          Hastinapur
-        </h1>
-        <p className="mt-6 max-w-[300px] font-serif text-lg leading-snug text-muted">
+        <div aria-hidden className="mb-8 flex items-end justify-center -space-x-3">
+          {HERO.map(({ role, tone, tilt }) => (
+            <div key={role} className={`h-36 w-24 overflow-hidden rounded-xl shadow-elevation-2 ${tone} ${tilt}`}>
+              <RoleFigure role={role} className="h-full w-full" />
+            </div>
+          ))}
+        </div>
+        <p className="text-sm font-medium tracking-[0.1px] text-primary">Sabha of</p>
+        <h1 className="font-serif text-[57px] leading-[64px] text-on-surface">Hastinapur</h1>
+        <p className="mt-4 max-w-[320px] text-base leading-6 tracking-[0.5px] text-on-surface-variant">
           One night of court intrigue. Cards move in the dark. At dawn, the Sabha must judge.
         </p>
-        <p className="mt-3 text-sm uppercase tracking-[0.25em] text-muted">5–10 players · one phone each</p>
+        <p className="mt-2 text-sm tracking-[0.25px] text-on-surface-variant">5–10 players · one phone each</p>
       </div>
-      <nav className="flex flex-col gap-3">
-        <Link
-          href="/create"
-          className="flex min-h-[56px] items-center justify-center rounded-2xl bg-saffron text-base font-semibold uppercase tracking-[0.14em] text-ink transition hover:bg-gold"
-        >
-          Create Sabha
-        </Link>
-        <Link
-          href="/join"
-          className="flex min-h-[56px] items-center justify-center rounded-2xl border border-line bg-panel text-base font-semibold uppercase tracking-[0.14em] hover:border-saffron/70"
-        >
+      <nav className="flex flex-col gap-2">
+        <LinkButton href="/create">Create Sabha</LinkButton>
+        <LinkButton href="/join" variant="secondary">
           Join Sabha
-        </Link>
-        <Link href="/how-to-play" className="flex min-h-[44px] items-center justify-center text-muted underline-offset-4 hover:text-parchment hover:underline">
+        </LinkButton>
+        <LinkButton href="/how-to-play" variant="ghost">
           How to play
-        </Link>
+        </LinkButton>
       </nav>
-      <p className="mt-4 text-center text-[11px] leading-snug text-muted/70">
+      <p className="mt-4 text-center text-xs leading-4 tracking-[0.4px] text-on-surface-variant">
         Inspired by the Mahabharata. All mechanics are game adaptations, not canonical claims.
       </p>
     </section>

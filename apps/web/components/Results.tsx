@@ -4,7 +4,8 @@ import { useState } from "react";
 import { Faction, type PlayerId, type PrivatePlayerView, type PublicGameView } from "@sabha/protocol";
 import { FACTION_PRESENTATION, ROLE_PRESENTATION } from "@/roles/rolePresentation";
 import { send } from "@/websocket/socket";
-import { FactionBadge } from "./FactionBadge";
+import { FactionBadge, FactionIcon } from "./FactionBadge";
+import { RoleAvatar } from "./RoleCard";
 import { VoteReveal } from "./VoteReveal";
 import { BottomActions, Button, Divider, Eyebrow, Screen, Title } from "./ui";
 
@@ -52,17 +53,17 @@ export function Results({ game, me }: { game: PublicGameView; me: PrivatePlayerV
     const role = ROLE_PRESENTATION[r.finalRole];
     return (
       <Screen className="justify-center text-center" key={id}>
-        <Title className="text-4xl uppercase">{nameOf(id)}</Title>
-        <p className="text-xs uppercase tracking-[0.3em] text-muted">Final identity</p>
-        <p className="font-serif text-5xl uppercase text-saffron">
-          <span aria-hidden>{role.icon} </span>
-          {role.name}
-        </p>
+        <Title className="text-4xl">{nameOf(id)}</Title>
+        <p className="text-xs tracking-wide text-muted">Final identity</p>
+        <div className="flex justify-center">
+          <RoleAvatar role={r.finalRole} deck={game.deck} size="xl" />
+        </div>
+        <p className="font-serif text-[45px] leading-[52px] text-primary">{role.name}</p>
         <div className="flex justify-center">
           <FactionBadge faction={r.faction} />
         </div>
-        <p className="text-xs uppercase tracking-[0.3em] text-muted">Status</p>
-        <p className="font-semibold uppercase tracking-[0.2em] text-kaurava">✗ Eliminated</p>
+        <p className="text-xs tracking-wide text-muted">Status</p>
+        <p className="font-semibold tracking-wide text-error">✗ Eliminated</p>
         <BottomActions>
           <Button onClick={() => (revealIndex + 1 < fallen.length ? setRevealIndex(revealIndex + 1) : setStage(2))}>
             {revealIndex + 1 < fallen.length ? "Next" : "Show everybody"}
@@ -81,10 +82,14 @@ export function Results({ game, me }: { game: PublicGameView; me: PrivatePlayerV
     <Screen>
       <Eyebrow className="text-center">The Sabha has spoken</Eyebrow>
       <div className="text-center">
-        {headlineFaction && <p aria-hidden className="text-4xl">{FACTION_PRESENTATION[headlineFaction].icon}</p>}
-        <Title className="text-4xl uppercase tracking-[0.06em]">{results.headline}</Title>
+        {headlineFaction && (
+          <div className="mb-2 flex justify-center">
+            <FactionIcon faction={headlineFaction} className="h-12 w-12" />
+          </div>
+        )}
+        <Title className="text-[36px] leading-[44px]">{results.headline.charAt(0) + results.headline.slice(1).toLowerCase()}</Title>
         {mine && (
-          <p className={`mt-3 text-lg font-semibold ${mine.won ? "text-emerald-400" : "text-kaurava"}`}>
+          <p className={`mt-3 text-lg font-semibold ${mine.won ? "text-success" : "text-error"}`}>
             {mine.won ? "✓ You won" : "✗ You lost"} — {mine.reason}
           </p>
         )}
@@ -92,28 +97,29 @@ export function Results({ game, me }: { game: PublicGameView; me: PrivatePlayerV
 
       <Divider />
       <section aria-labelledby="final-ids">
-        <h2 id="final-ids" className="mb-3 text-xs uppercase tracking-[0.3em] text-muted">Final identities</h2>
-        <ul className="flex flex-col gap-2">
+        <h2 id="final-ids" className="mb-3 text-xs tracking-wide text-muted">Final identities</h2>
+        <ul className="overflow-hidden rounded-xl bg-surface-container-high">
           {results.playerResults.map((r) => {
             const role = ROLE_PRESENTATION[r.finalRole];
             const moved = r.startingRole !== r.finalRole;
             return (
-              <li key={r.playerId} className="flex items-center gap-3 rounded-2xl border border-line bg-panel px-4 py-3">
-                <span className={`text-lg ${r.won ? "text-emerald-400" : "text-kaurava"}`} aria-label={r.won ? "won" : "lost"}>
+              <li key={r.playerId} className="flex min-h-[72px] items-center gap-4 border-b border-outline-variant px-4 py-2 last:border-b-0">
+                <RoleAvatar role={r.finalRole} deck={game.deck} size="lg" />
+                <span className={`order-last text-xl ${r.won ? "text-success" : "text-error"}`} aria-label={r.won ? "won" : "lost"}>
                   {r.won ? "✓" : "✗"}
                 </span>
                 <span className="min-w-0 flex-1">
-                  <span className="block truncate font-semibold">
+                  <span className="block truncate text-base font-medium">
                     {nameOf(r.playerId)}
-                    {r.eliminated && <span className="ml-2 text-xs uppercase tracking-widest text-kaurava">removed</span>}
+                    {r.eliminated && <span className="ml-2 text-xs tracking-wide text-error">removed</span>}
                   </span>
                   <span className="block text-sm text-muted">
-                    {role.icon} {role.name}
+                    {role.name}
                     {moved && <> · started as {ROLE_PRESENTATION[r.startingRole].name}</>}
                   </span>
                 </span>
-                <span className="text-sm" aria-label={FACTION_PRESENTATION[r.faction].label}>
-                  {FACTION_PRESENTATION[r.faction].icon}
+                <span role="img" aria-label={FACTION_PRESENTATION[r.faction].label}>
+                  <FactionIcon faction={r.faction} />
                 </span>
               </li>
             );
@@ -126,10 +132,10 @@ export function Results({ game, me }: { game: PublicGameView; me: PrivatePlayerV
 
       <Divider />
       <section aria-labelledby="what-happened">
-        <h2 id="what-happened" className="mb-3 text-xs uppercase tracking-[0.3em] text-muted">What happened</h2>
+        <h2 id="what-happened" className="mb-3 text-xs tracking-wide text-muted">What happened</h2>
         <ol className="flex flex-col gap-2 text-[15px] leading-snug">
           {[...night, ...votes].map((e, i) => (
-            <li key={i} className="border-l-2 border-gold/40 pl-3">
+            <li key={i} className="border-l-2 border-outline-variant pl-3">
               {e.text}
             </li>
           ))}

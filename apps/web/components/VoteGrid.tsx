@@ -43,7 +43,7 @@ export function VoteGrid({ game, prompt, voted, total }: { game: PublicGameView;
     return (
       <Screen className="items-center justify-center text-center">
         <Eyebrow>Your vote</Eyebrow>
-        <Title className="text-4xl uppercase">{chosen.displayName}</Title>
+        <Title className="text-4xl">{chosen.displayName}</Title>
         <p className="text-muted">This cannot be changed.</p>
         <BottomActions>
           <ErrorText>{error}</ErrorText>
@@ -84,7 +84,7 @@ export function VoteGrid({ game, prompt, voted, total }: { game: PublicGameView;
               role="radio"
               aria-checked={choice === p.id}
               onClick={() => setChoice(p.id)}
-              className={`flex min-h-[56px] w-full items-center gap-3 rounded-2xl border px-4 text-left text-base ${choice === p.id ? "border-saffron bg-saffron/15" : "border-line bg-panel"}`}
+              className={`flex min-h-[56px] w-full items-center gap-3 rounded-xl border px-4 text-left text-base ${choice === p.id ? "border-primary bg-primary-container text-on-primary-container" : "border-line bg-panel"}`}
             >
               <span aria-hidden className={choice === p.id ? "text-saffron" : "text-muted"}>{choice === p.id ? "◉" : "○"}</span>
               <PlayerAvatar player={p} size="sm" />
